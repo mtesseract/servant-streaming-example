@@ -1,0 +1,39 @@
+name:                servant-streaming-example
+version:             0.0.1
+synopsis:            Servant Streaming Example
+description:         Demonstrates Conduit based streaming with Servant
+homepage:            https://github.com/mtesseract/servant-streaming-example
+license:             BSD3
+license-file:        LICENSE
+author:              Moritz Schulte
+maintainer:          mtesseract@silverratio.net
+copyright:           (c) 2017 Moritz Schulte
+category:            Data
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+executable servant-streaming-example
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base >= 4.7 && < 5
+                     , servant
+                     , servant-server
+                     , aeson
+                     , containers
+                     , bytestring
+                     , conduit
+                     , conduit-combinators
+                     , http-types
+                     , http-media
+                     , wai
+                     , wai-conduit
+                     , resourcet
+                     , warp
+                     , vector
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/mtesseract/mock-nakadi-stock-consumer
