@@ -17,8 +17,8 @@ import           Control.Arrow
 import           Control.Exception                          hiding (Handler)
 import           Control.Monad
 import           Control.Monad.Trans.Resource
-import           Data.Aeson
-import           Data.Aeson.Encoding
+import           Data.Aeson                                 as Aeson
+import           Data.Aeson.Encoding                        as Aeson
 import           Data.ByteString                            (ByteString)
 import qualified Data.ByteString                            as ByteString
 import           Data.ByteString.Builder
@@ -63,7 +63,7 @@ toBuilderDelimited a = Chunk (streamableToBuilder a)
                              Just delim -> [Chunk delim, Flush]
                              Nothing    -> [Flush]
 
-instance Streamable Value where
+instance Streamable Aeson.Value where
   streamableToBuilder = lazyByteString . encodingToLazyByteString . toEncoding
   streamableCT _ = Just ("application" Media.// "x-json-stream")
   streamableOutDelimiter _ = Just (lazyByteString "\n")
@@ -135,8 +135,9 @@ instance Streamable o => HasServer (PostConduit i o) ctxt where
 -- | This type defines the REST API for the server.
 type ServiceAPI = "one" :> Get '[JSON] Int
    :<|> "ones" :> GetSource ByteString
-   :<|> "hello" :> GetSource Value
-   :<|> "identity" :> PostConduit Value Value
+   :<|> "hello" :> GetSource Aeson.Value
+   :<|> "identity" :> PostConduit Aeson.Value Aeson.Value
+   :<|> "inc" :> PostConduit Aeson.Value Aeson.Value
 
 -- | Define the Warp server.
 serveAPI :: Server ServiceAPI
@@ -145,6 +146,7 @@ serveAPI =
   :<|> serveOnes
   :<|> serveHello
   :<|> serveIdentity
+  :<|> serveInc
 
 serveOne :: Handler Int
 serveOne = return 1
@@ -156,21 +158,31 @@ serveOnes =
           yield "1"
           go
 
-serveHello :: Handler (Source (ResourceT IO) Value)
+serveHello :: Handler (Source (ResourceT IO) Aeson.Value)
 serveHello = return go
   where go = do
           yield (Array (Vector.replicate 10 (String "hello")))
           go
 
-serveIdentity :: Handler (ConduitM Value Value (ResourceT IO) ())
+serveIdentity :: Handler (ConduitM Aeson.Value Aeson.Value (ResourceT IO) ())
 serveIdentity = return go
   where go = await >>= \case
           Just x  -> yield x >> go
           Nothing -> return ()
 
+serveInc :: Handler (ConduitM Aeson.Value Aeson.Value (ResourceT IO) ())
+serveInc = return go
+  where go = await >>= \case
+          Just (Aeson.Number x)  -> yield (Aeson.String $ x+1 ) >> go
+          Just (Aeson.String x)  -> yield (Aeson.String $ x<>"!") >> go
+          Just x  -> error $ "serveInc: unsupported constructor " <> show x
+          Nothing -> return ()
+
 main :: IO ()
 main = do
-  run 8080 (serve (Proxy :: Proxy ServiceAPI) serveAPI)
+  let port = 8080
+  putStrLn $ "Going to listen port " <> show port
+  run port (serve (Proxy :: Proxy ServiceAPI) serveAPI)
   return ()
 
 
