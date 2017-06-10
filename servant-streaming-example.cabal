@@ -25,6 +25,7 @@ executable servant-streaming-example
                      , bytestring
                      , conduit
                      , conduit-combinators
+                     , conduit-extra
                      , http-types
                      , http-media
                      , wai
@@ -32,6 +33,7 @@ executable servant-streaming-example
                      , resourcet
                      , warp
                      , vector
+                     , say
   default-language:    Haskell2010
 
 source-repository head
