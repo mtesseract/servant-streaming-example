@@ -174,7 +174,7 @@ serveIdentity = return go
 serveInc :: Handler (ConduitM Aeson.Value Aeson.Value (ResourceT IO) ())
 serveInc = return go
   where go = await >>= \case
-          Just (Aeson.Number x)  -> yield (Aeson.String $ x+1 ) >> go
+          Just (Aeson.Number x)  -> yield (Aeson.Number $ x+1 ) >> go
           Just (Aeson.String x)  -> yield (Aeson.String $ x<>"!") >> go
           Just x  -> error $ "serveInc: unsupported constructor " <> show x
           Nothing -> return ()
