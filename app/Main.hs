@@ -97,7 +97,7 @@ instance Streamable a => HasServer (GetSource a) ctxt where
         let maybeMediaTypeBS = Media.renderHeader <$> streamableCT (Proxy :: Proxy a)
         in maybeToList $ ("Content-Type",) <$> maybeMediaTypeBS
 
-instance Streamable o => HasServer (PostConduit i o) ctxt where
+instance (Streamable i, Streamable o) => HasServer (PostConduit i o) ctxt where
   type ServerT (PostConduit i o) m = m (ConduitM i o (ResourceT IO) ())
 
   route Proxy _ctxt sub = leafRouter $
@@ -116,6 +116,7 @@ instance Streamable o => HasServer (PostConduit i o) ctxt where
                   .| Data.Conduit.Binary.lines
                   .| mapC streamableFromByteString
                   .| CL.catMaybes
+                  .| transformer
         in mkResponse st src
 
       mkResponse :: InternalState
